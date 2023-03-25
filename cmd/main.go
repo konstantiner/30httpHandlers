@@ -1,8 +1,8 @@
 package main
 
 import (
-	"30httpHandlers/pkg/storage"
-	"30httpHandlers/pkg/app"	
+	"30httpHandlers/internal/storage"
+	"30httpHandlers/internal/app"	
 )
 
 func main() {
