@@ -37,11 +37,11 @@ func (a *App) Run() {
 	rtr := chi.NewRouter()
 	rtr.Use(middleware.Logger)
 
-	rtr.Get("/get", a.GetAll)
+	rtr.Get("/", a.GetAll)
 	rtr.Post("/create", a.Create)
 	rtr.Post("/make_friends", a.MakeFriends)
-	rtr.Delete("/delete", a.DeleteUser)
-	rtr.Get("/get/{userID}", a.UserFriends)
+	rtr.Delete("/user", a.DeleteUser)
+	rtr.Get("/userFriends/{userID}", a.UserFriends)
 	rtr.Put("/{userID}", a.UpdateUserAge)
 	
 	http.ListenAndServe("localhost:8080", rtr)
