@@ -12,13 +12,13 @@ func main() {
 }
 
 /*
-curl -X POST -d "{\"name\": \"Vasiliy\", \"age\": 20}" http://localhost:8080/create
-curl -X POST -d "{\"name\": \"Ivan\", \"age\": 30}" http://localhost:8080/create
-curl -X POST -d "{\"name\": \"Boss\", \"age\": 30}" http://localhost:8080/create
-curl -X POST -d "{\"sourceId\": 1, \"targetId\": 2}" http://localhost:8080/make_friends
-curl -X DELETE -d "{\"targetId\": 1}" http://localhost:8080/user
-curl -X PUT -d "{\"age\": 25}" http://localhost:8080/2
+curl -X POST -d "{\"name\": \"Vasiliy\", \"age\": 20}" http://localhost:8080/users
+curl -X POST -d "{\"name\": \"Ivan\", \"age\": 30}" http://localhost:8080/users
+curl -X POST -d "{\"name\": \"Boss\", \"age\": 30}" http://localhost:8080/users
+curl -X POST -d "{\"sourceId\": 1, \"targetId\": 2}" http://localhost:8080/friends
+curl -X DELETE -d "{\"targetId\": 1}" http://localhost:8080/users
+curl -X PUT -d "{\"age\": 25}" http://localhost:8080/users/age/2
 
-http://localhost:8080/
-http://localhost:8080/userFriends/1
+http://localhost:8080/allUsers
+http://localhost:8080/users/friends/1
 */
