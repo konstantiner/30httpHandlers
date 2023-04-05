@@ -1,12 +1,13 @@
 package app
 
 import (
+	"30httpHandlers/internal/entities"
+	"30httpHandlers/internal/services"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"30httpHandlers/internal/entities"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -37,12 +38,12 @@ func (a *App) Run() {
 	rtr := chi.NewRouter()
 	rtr.Use(middleware.Logger)
 
-	rtr.Get("/allUsers", a.GetAll)
+	rtr.Get("/users", a.GetAll)
 	rtr.Post("/users", a.Create)
 	rtr.Post("/friends", a.MakeFriends)
 	rtr.Delete("/users", a.DeleteUser)
-	rtr.Get("/users/friends/{userID}", a.UserFriends)
-	rtr.Put("/users/age/{userID}", a.UpdateUserAge)
+	rtr.Get("/users/{userID}/friends", a.UserFriends)
+	rtr.Put("/users/{userID}/age", a.UpdateUserAge)
 	
 	http.ListenAndServe("localhost:8080", rtr)
 }
@@ -95,23 +96,19 @@ func (a *App) MakeFriends(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	username1 := a.repository.UserName(u.SourceId) 
-	username2 := a.repository.UserName(u.TargetId) 
 	
-	//проверяем: если уже дружат, то не будем ещё раз добавлять в список друзей
-	var allFriendsUser []int = a.repository.UserFriends(u.SourceId)
-	for _, x := range allFriendsUser {
-		if x == u.TargetId {
-			w.WriteHeader(http.StatusAlreadyReported)
-			w.Write([]byte(fmt.Sprintf("%s и %s уже дружат", username1, username2)))
-			return
-		}
+	username1 := a.repository.UserName(u.SourceId) 
+    username2 := a.repository.UserName(u.TargetId) 
+    var allFriendsUser1 []int = a.repository.UserFriends(u.SourceId)
+	
+	b, chek := services.NewFriends(u.SourceId, u.TargetId, username1, username2, allFriendsUser1)
+
+	if !chek{
+		a.repository.MakeFriends(u.SourceId, u.TargetId)
 	}
 
-	a.repository.MakeFriends(u.SourceId, u.TargetId)
-	
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("%s и %s теперь друзья", username1, username2)))
+	w.Write(b)
 }
 
 func (a *App) DeleteUser(w http.ResponseWriter, r *http.Request) {
