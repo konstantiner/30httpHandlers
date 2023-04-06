@@ -13,22 +13,11 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-type Storage interface {
-	AllUsers() map[int]entities.User
-	CreateUser(entities.User) int
-	MakeFriends(int, int)
-	DeleteUser(userId int)
-	DeleteFriend(userId int, friendId int)
-	UserFriends(userId int) []int
-	UserName(userId int) string
-	UpdateUserAge(userId int, age int)
-}
-
 type App struct {
-	repository Storage
+	repository services.Storage
 }
 
-func NewApp(repository Storage) *App {
+func NewApp(repository services.Storage) *App {
 	return &App{
 		repository: repository,
 	}
@@ -96,16 +85,9 @@ func (a *App) MakeFriends(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
+	rep := *&a.repository
 	
-	username1 := a.repository.UserName(u.SourceId) 
-    username2 := a.repository.UserName(u.TargetId) 
-    var allFriendsUser1 []int = a.repository.UserFriends(u.SourceId)
-	
-	b, chek := services.NewFriends(u.SourceId, u.TargetId, username1, username2, allFriendsUser1)
-
-	if !chek{
-		a.repository.MakeFriends(u.SourceId, u.TargetId)
-	}
+	b:= services.NewFriends(u.SourceId, u.TargetId, rep)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(b)
