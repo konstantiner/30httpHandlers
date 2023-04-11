@@ -4,7 +4,6 @@ import (
 	"30httpHandlers/internal/entities"
 	"30httpHandlers/internal/services"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -27,28 +26,24 @@ func (a *App) Run() {
 	rtr := chi.NewRouter()
 	rtr.Use(middleware.Logger)
 
-	rtr.Get("/users", a.GetAll)
-	rtr.Post("/users", a.Create)
-	rtr.Post("/friends", a.MakeFriends)
-	rtr.Delete("/users", a.DeleteUser)
-	rtr.Get("/users/{userID}/friends", a.UserFriends)
-	rtr.Put("/users/{userID}/age", a.UpdateUserAge)
+	rtr.Get("/users", a.getAll)
+	rtr.Post("/users", a.create)
+	rtr.Post("/friends", a.makeFriends)
+	rtr.Delete("/users", a.deleteUser)
+	rtr.Get("/users/{userID}/friends", a.userFriends)
+	rtr.Put("/users/{userID}/age", a.updateUserAge)
 	
 	http.ListenAndServe("localhost:8080", rtr)
 }
 
 //GetAll возвращает всех пользователей в json формате
-func (a *App) GetAll(w http.ResponseWriter, r *http.Request) {
-	var response []entities.User
-	for _, user := range a.repository.AllUsers() {
-			response = append(response, user)
-	}
-	jsonString, _ := json.Marshal(response)
+func (a *App) getAll(w http.ResponseWriter, r *http.Request) {
+	b := services.GetAllUsers(a.repository)
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, string(jsonString))
+	w.Write(b)
 }
 
-func (a *App) Create(w http.ResponseWriter, r *http.Request) {
+func (a *App) create(w http.ResponseWriter, r *http.Request) {
 	content, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -64,13 +59,12 @@ func (a *App) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	userId := a.repository.CreateUser(u)
-
+	b := services.CreateUser(u, a.repository)
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(fmt.Sprintf("Пользователь %s добавлен. ID = %d", u.Name, userId)))
+	w.Write(b)
 }
 
-func (a *App) MakeFriends(w http.ResponseWriter, r *http.Request) {
+func (a *App) makeFriends(w http.ResponseWriter, r *http.Request) {
 	content, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -85,15 +79,13 @@ func (a *App) MakeFriends(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	rep := *&a.repository
 	
-	b:= services.NewFriends(u.SourceId, u.TargetId, rep)
-
+	b := services.NewFriends(u.SourceId, u.TargetId, a.repository)
 	w.WriteHeader(http.StatusOK)
 	w.Write(b)
 }
 
-func (a *App) DeleteUser(w http.ResponseWriter, r *http.Request) {
+func (a *App) deleteUser(w http.ResponseWriter, r *http.Request) {
 	content, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -109,37 +101,20 @@ func (a *App) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//вытащим список друзей пользователя, зайдем к каждому другу и удалим у него удаленного пользователя из списка друзей
-	var allFriends []int = a.repository.UserFriends(u.TargetId)
-	for _, x := range allFriends {
-		var friendsUser []int = a.repository.UserFriends(x)
-		for _, z := range friendsUser {
-			if u.TargetId == z {
-				a.repository.DeleteFriend(x, z)				
-			}
-		}
-	}
-	nameDeleteUser :=  a.repository.UserName(u.TargetId)
-	a.repository.DeleteUser(u.TargetId)
-
+	b := services.DeleteUser(u.TargetId, a.repository)
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("Пользователь %s удален.", nameDeleteUser)))
+	w.Write(b)
 }
 
-func (a *App) UserFriends(w http.ResponseWriter, r *http.Request){
+func (a *App) userFriends(w http.ResponseWriter, r *http.Request){
 	userID, _:= strconv.Atoi(chi.URLParam(r, "userID"))
 	
-	var allFriends []int = a.repository.UserFriends(userID)
-	friendsName := ""
-	for _, x := range allFriends {
-		friendsName += fmt.Sprintf("ID: %d, Имя: %s\n",x, a.repository.UserName(x))
-	}
-	
+	b := services.UserFriends(userID, a.repository)
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("Друзья пользователя: %s\n", friendsName)))
+	w.Write(b)
 }
 
-func (a *App) UpdateUserAge(w http.ResponseWriter, r *http.Request){
+func (a *App) updateUserAge(w http.ResponseWriter, r *http.Request){
 	type newAge struct{
 		Age int `json:"age"`
 	}
@@ -159,8 +134,8 @@ func (a *App) UpdateUserAge(w http.ResponseWriter, r *http.Request){
 		w.Write([]byte(err.Error()))
 		return
 	}
-	a.repository.UpdateUserAge(userId, u.Age)
-			
+	
+	b := services.UpdateUserAge(userId, u.Age, a.repository)
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Возраст пользователя успешно обновлён"))
+	w.Write(b)
 }
