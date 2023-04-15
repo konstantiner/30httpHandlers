@@ -1,13 +1,10 @@
 package main
 
 import (
-	"30httpHandlers/internal/storage"
-	"30httpHandlers/internal/app"	
+	"30httpHandlers/internal/app"
 )
 
 func main() {
-	repository := storage.NewService()
-	var app = app.NewApp(repository)
 	app.Run()
 }
 
